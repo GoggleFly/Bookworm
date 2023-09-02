@@ -17,6 +17,8 @@ struct AddBookView: View {
     @State private var genre = "Fantasy"
     @State private var review = ""
     
+    @State private var showingValidationAlert = false
+    
     let genres = ["Fantasy", "Horror", "Kids", "Mystery", "Poetry", "Romance", "Thriller"]
     
     var body: some View {
@@ -43,21 +45,40 @@ struct AddBookView: View {
                 
                 Section {
                     Button("Save") {
-                        let newBook = Book(context: moc)
-                        newBook.id = UUID()
-                        newBook.title = title
-                        newBook.author = author
-                        newBook.rating = Int16(rating)
-                        newBook.genre = genre
-                        newBook.review = review
-                        
-                        try? moc.save()
-                        dismiss()
+                        if performValidation() {
+                            let newBook = Book(context: moc)
+                            newBook.id = UUID()
+                            newBook.title = title
+                            newBook.author = author
+                            newBook.rating = Int16(rating)
+                            newBook.genre = genre
+                            newBook.review = review
+                            newBook.date = Date.now
+                            
+                            try? moc.save()
+                            dismiss()
+                        } else {
+                            showingValidationAlert.toggle()
+                        }
                     }
                 }
             }
             .navigationTitle("Add Book")
+            .alert("Uh oh!", isPresented: $showingValidationAlert) {
+                Button("OK") { }
+            } message: {
+                Text("Please complete all details to save a book review.")
+            }
+
         }
+    }
+    
+    func performValidation() -> Bool {
+        if title != "" && author != "" && review != "" {
+            return true
+        }
+        
+        return false
     }
 }
 
